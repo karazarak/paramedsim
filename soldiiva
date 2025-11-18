@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Paramedic Simulator</title>
+
+<!-- CSS goes here -->
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f0f2f5;
+  display: flex;
+  height: 100vh;
+  touch-action: none; /* allow custom dragging */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Sidebar for equipment */
+.sidebar {
+  width: 220px;
+  background: #1f2933;
+  color: #ffffff;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.equipment-item {
+  background: #323f4b;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  cursor: grab;
+  text-align: center;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.equipment-item:active {
+  cursor: grabbing;
+}
+
+.hint {
+  font-size: 12px;
+  margin-top: 20px;
+  color: #9fb3c8;
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 15px;
+  background: #e11d48; /* red */
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.reset-btn:active {
+  background: #be123c;
+}
+
+/* Main area */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+.patient-area {
+  width: 70%;
+  height: 80%;
+  border-radius: 8px;
+  border: 2px dashed #cbd2d9;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 18px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+/* The actual body image – this is what we measure now */
+.patient-image {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  pointer-events: none;   /* so it doesn't block drag logic */
+  user-select: none;
+}
+
+.patient-label {
+  position: absolute;
+  color: #64748b;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.patient-area.drag-over {
+  border-color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+.dropped-item {
+  position: absolute;
+  padding: 6px 10px;
+  background: rgba(59, 130, 246, 0.85);
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 14px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.drag-preview {
+  position: fixed;
+  padding: 6px 10px;
+  background: rgba(31, 41, 55, 0.9);
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 14px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.pad-icon {
+  width: 34px;
+  height: 34px;
+  background: #22c55e;
+  border-radius: 6px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px rgba(0,0,0,0.4);
+}
+
+/* ECG monitor */
+.monitor {
+  width: 260px;
+  background: #020617;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #e5e7eb;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 0 8px rgba(15, 23, 42, 0.6);
+}
+
+.monitor-title {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  color: #38bdf8;
+}
+
+.monitor-screen {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  height: 120px;
+  padding: 6px 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.monitor-placeholder {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ecg-line {
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  color: #22c55e;
+  white-space: pre;
+}
+</style>
+
+</head>
+<body>
+
+<!-- HTML goes here -->
+<div class="sidebar">
+  <h2>Equipment</h2>
+  <div class="equipment-item" data-equipment="defibrillator">Defibrillator</div>
+  <div class="equipment-item" data-equipment="stethoscope">Stethoscope</div>
+  <div class="equipment-item" data-equipment="iv-bag">IV Bag</div>
+  <p class="hint">Touch and drag equipment onto the patient area.</p>
+  <button id="resetButton" class="reset-btn">Reset Patient</button>
+</div>
+
+<div class="main">
+  <div class="patient-area" id="patientArea">
+    <!-- Actual body image we now measure -->
+    <img
+      id="patientImage"
+      class="patient-image"
+      src="https://upload.wikimedia.org/wikipedia/commons/5/53/Human_body_outline.png"
+      alt="Human body outline"
+    />
+    <div class="patient-label">
+      Patient Area (Drop equipment here)
+    </div>
+  </div>
+
+  <div id="monitor" class="monitor">
+    <div class="monitor-title">ECG Monitor</div>
+    <div class="monitor-screen" id="monitorScreen">
+      <span class="monitor-placeholder">No signal - pads not applied</span>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript goes here -->
+<script>
+window.addEventListener('load', () => {
+  const equipmentItems = document.querySelectorAll('.equipment-item');
+  const patientArea = document.getElementById('patientArea');
+  const patientImage = document.getElementById('patientImage');
+  const resetButton = document.getElementById('resetButton');
+  const monitorScreen = document.getElementById('monitorScreen');
+
+  let draggingEl = null;
+  let currentEquipmentType = null;
+  let isDragging = false;
+</script>
+
+</body>
+</html>

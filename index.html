@@ -1,250 +1,440 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Paramedic Simulator</title>
+  <meta charset="UTF-8" />
+  <title>Paramedicine Equipment Simulation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-<!-- CSS goes here -->
-<style>
-* {
-  box-sizing: border-box;
-}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      height: 100vh;
+      touch-action: none; /* allow custom dragging */
+      -webkit-user-select: none;
+      user-select: none;
+    }
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f0f2f5;
-  display: flex;
-  height: 100vh;
-  touch-action: none; /* allow custom dragging */
-  -webkit-user-select: none;
-  user-select: none;
-}
+    /* Sidebar for equipment */
+    .sidebar {
+      width: 220px;
+      background: #1f2933;
+      color: #ffffff;
+      padding: 20px;
+    }
 
-/* Sidebar for equipment */
-.sidebar {
-  width: 220px;
-  background: #1f2933;
-  color: #ffffff;
-  padding: 20px;
-}
+    .sidebar h2 {
+      margin-top: 0;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
 
-.sidebar h2 {
-  margin-top: 0;
-  font-size: 20px;
-  margin-bottom: 15px;
-}
+    .equipment-item {
+      background: #323f4b;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      cursor: grab;
+      text-align: center;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
 
-.equipment-item {
-  background: #323f4b;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  cursor: grab;
-  text-align: center;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
+    .equipment-item:active {
+      cursor: grabbing;
+    }
 
-.equipment-item:active {
-  cursor: grabbing;
-}
+    .hint {
+      font-size: 12px;
+      margin-top: 20px;
+      color: #9fb3c8;
+    }
 
-.hint {
-  font-size: 12px;
-  margin-top: 20px;
-  color: #9fb3c8;
-}
+    .reset-btn {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #e11d48; /* red */
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.reset-btn {
-  width: 100%;
-  padding: 10px;
-  margin-top: 15px;
-  background: #e11d48; /* red */
-  border: none;
-  border-radius: 4px;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .reset-btn:active {
+      background: #be123c;
+    }
 
-.reset-btn:active {
-  background: #be123c;
-}
+    /* Main area */
+    .main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      gap: 20px;
+    }
 
-/* Main area */
-.main {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  gap: 20px;
-}
+    .patient-area {
+      width: 70%;
+      height: 80%;
+      border-radius: 8px;
+      border: 2px dashed #cbd2d9;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 18px;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
 
-.patient-area {
-  width: 70%;
-  height: 80%;
-  border-radius: 8px;
-  border: 2px dashed #cbd2d9;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 18px;
-  overflow: hidden;
-  background-color: #ffffff;
-}
+    /* The actual body image – this is what we measure now */
+    .patient-image {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      pointer-events: none;   /* so it doesn't block drag logic */
+      user-select: none;
+    }
 
-/* The actual body image – this is what we measure now */
-.patient-image {
-  max-height: 100%;
-  max-width: 100%;
-  object-fit: contain;
-  pointer-events: none;   /* so it doesn't block drag logic */
-  user-select: none;
-}
+    .patient-label {
+      position: absolute;
+      color: #64748b;
+      font-size: 14px;
+      pointer-events: none;
+    }
 
-.patient-label {
-  position: absolute;
-  color: #64748b;
-  font-size: 14px;
-  pointer-events: none;
-}
+    .patient-area.drag-over {
+      border-color: #3b82f6;
+      background-color: #f8fafc;
+    }
 
-.patient-area.drag-over {
-  border-color: #3b82f6;
-  background-color: #f8fafc;
-}
+    .dropped-item {
+      position: absolute;
+      padding: 6px 10px;
+      background: rgba(59, 130, 246, 0.85);
+      color: #ffffff;
+      border-radius: 4px;
+      font-size: 14px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
 
-.dropped-item {
-  position: absolute;
-  padding: 6px 10px;
-  background: rgba(59, 130, 246, 0.85);
-  color: #ffffff;
-  border-radius: 4px;
-  font-size: 14px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
+    .drag-preview {
+      position: fixed;
+      padding: 6px 10px;
+      background: rgba(31, 41, 55, 0.9);
+      color: #ffffff;
+      border-radius: 4px;
+      font-size: 14px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1000;
+    }
 
-.drag-preview {
-  position: fixed;
-  padding: 6px 10px;
-  background: rgba(31, 41, 55, 0.9);
-  color: #ffffff;
-  border-radius: 4px;
-  font-size: 14px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 1000;
-}
+    .pad-icon {
+      width: 34px;
+      height: 34px;
+      background: #22c55e;
+      border-radius: 6px;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
 
-.pad-icon {
-  width: 34px;
-  height: 34px;
-  background: #22c55e;
-  border-radius: 6px;
-  position: absolute;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 6px rgba(0,0,0,0.4);
-}
+    /* ECG monitor */
+    .monitor {
+      width: 260px;
+      background: #020617;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #e5e7eb;
+      font-family: Arial, sans-serif;
+      box-shadow: 0 0 8px rgba(15, 23, 42, 0.6);
+    }
 
-/* ECG monitor */
-.monitor {
-  width: 260px;
-  background: #020617;
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: #e5e7eb;
-  font-family: Arial, sans-serif;
-  box-shadow: 0 0 8px rgba(15, 23, 42, 0.6);
-}
+    .monitor-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      color: #38bdf8;
+    }
 
-.monitor-title {
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  color: #38bdf8;
-}
+    .monitor-screen {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 4px;
+      height: 120px;
+      padding: 6px 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-.monitor-screen {
-  background: #020617;
-  border: 1px solid #1e293b;
-  border-radius: 4px;
-  height: 120px;
-  padding: 6px 8px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    .monitor-placeholder {
+      font-size: 12px;
+      color: #64748b;
+    }
 
-.monitor-placeholder {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.ecg-line {
-  font-family: "Courier New", monospace;
-  font-size: 14px;
-  color: #22c55e;
-  white-space: pre;
-}
-</style>
-
+    .ecg-line {
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      color: #22c55e;
+      white-space: pre;
+    }
+  </style>
 </head>
 <body>
+  <div class="sidebar">
+    <h2>Equipment</h2>
+    <div class="equipment-item" data-equipment="defibrillator">Defibrillator</div>
+    <div class="equipment-item" data-equipment="stethoscope">Stethoscope</div>
+    <div class="equipment-item" data-equipment="iv-bag">IV Bag</div>
+    <p class="hint">Touch and drag equipment onto the patient area.</p>
+    <button id="resetButton" class="reset-btn">Reset Patient</button>
+  </div>
 
-<!-- HTML goes here -->
-<div class="sidebar">
-  <h2>Equipment</h2>
-  <div class="equipment-item" data-equipment="defibrillator">Defibrillator</div>
-  <div class="equipment-item" data-equipment="stethoscope">Stethoscope</div>
-  <div class="equipment-item" data-equipment="iv-bag">IV Bag</div>
-  <p class="hint">Touch and drag equipment onto the patient area.</p>
-  <button id="resetButton" class="reset-btn">Reset Patient</button>
-</div>
+  <div class="main">
+    <div class="patient-area" id="patientArea">
+      <!-- Actual body image we now measure -->
+      <img
+        id="patientImage"
+        class="patient-image"
+        src="https://upload.wikimedia.org/wikipedia/commons/5/53/Human_body_outline.png"
+        alt="Human body outline"
+      />
+      <div class="patient-label">
+        Patient Area (Drop equipment here)
+      </div>
+    </div>
 
-<div class="main">
-  <div class="patient-area" id="patientArea">
-    <!-- Actual body image we now measure -->
-    <img
-      id="patientImage"
-      class="patient-image"
-      src="https://upload.wikimedia.org/wikipedia/commons/5/53/Human_body_outline.png"
-      alt="Human body outline"
-    />
-    <div class="patient-label">
-      Patient Area (Drop equipment here)
+    <div id="monitor" class="monitor">
+      <div class="monitor-title">ECG Monitor</div>
+      <div class="monitor-screen" id="monitorScreen">
+        <span class="monitor-placeholder">No signal - pads not applied</span>
+      </div>
     </div>
   </div>
 
-  <div id="monitor" class="monitor">
-    <div class="monitor-title">ECG Monitor</div>
-    <div class="monitor-screen" id="monitorScreen">
-      <span class="monitor-placeholder">No signal - pads not applied</span>
-    </div>
-  </div>
-</div>
+  <script>
+    window.addEventListener('load', () => {
+      const equipmentItems = document.querySelectorAll('.equipment-item');
+      const patientArea = document.getElementById('patientArea');
+      const patientImage = document.getElementById('patientImage');
+      const resetButton = document.getElementById('resetButton');
+      const monitorScreen = document.getElementById('monitorScreen');
 
-<!-- JavaScript goes here -->
-<script>
-window.addEventListener('load', () => {
-  const equipmentItems = document.querySelectorAll('.equipment-item');
-  const patientArea = document.getElementById('patientArea');
-  const patientImage = document.getElementById('patientImage');
-  const resetButton = document.getElementById('resetButton');
-  const monitorScreen = document.getElementById('monitorScreen');
+      let draggingEl = null;
+      let currentEquipmentType = null;
+      let isDragging = false;
 
-  let draggingEl = null;
-  let currentEquipmentType = null;
-  let isDragging = false;
-</script>
+      let padRightPlaced = false;
+      let padLeftPlaced = false;
 
+      function showECG() {
+        monitorScreen.innerHTML = '<pre class="ecg-line">‾‾‾‾‾__|‾‾‾‾‾__|__‾‾‾‾‾__|‾‾‾‾‾__|</pre>';
+      }
+
+      function resetECG() {
+        monitorScreen.innerHTML = '<span class="monitor-placeholder">No signal - pads not applied</span>';
+      }
+
+      function getEventPosition(e) {
+        if (e.touches && e.touches[0]) {
+          return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else {
+          return { x: e.clientX, y: e.clientY };
+        }
+      }
+
+      function startDrag(e) {
+        e.preventDefault();
+        isDragging = true;
+        const item = e.currentTarget;
+        currentEquipmentType = item.dataset.equipment;
+
+        const pos = getEventPosition(e);
+        draggingEl = document.createElement('div');
+        draggingEl.classList.add('drag-preview');
+        draggingEl.textContent = item.textContent.trim();
+        draggingEl.style.left = pos.x + 'px';
+        draggingEl.style.top = pos.y + 'px';
+        document.body.appendChild(draggingEl);
+      }
+
+      function moveDrag(e) {
+        if (!isDragging || !draggingEl) return;
+        e.preventDefault();
+
+        const pos = getEventPosition(e);
+        const x = pos.x;
+        const y = pos.y;
+
+        draggingEl.style.left = x + 'px';
+        draggingEl.style.top = y + 'px';
+
+        const rect = patientArea.getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+          patientArea.classList.add('drag-over');
+        } else {
+          patientArea.classList.remove('drag-over');
+        }
+      }
+
+      function endDrag(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        if (draggingEl) {
+          draggingEl.remove();
+          draggingEl = null;
+        }
+
+        const pos = getEventPosition(e);
+        const x = pos.x;
+        const y = pos.y;
+
+        // Use the *image* rect, not the whole white box, for hit zones
+        const imgRect = patientImage.getBoundingClientRect();
+        const areaRect = patientArea.getBoundingClientRect();
+
+        const isInsideImage =
+          x >= imgRect.left && x <= imgRect.right &&
+          y >= imgRect.top && y <= imgRect.bottom;
+
+        if (!isInsideImage) {
+          patientArea.classList.remove('drag-over');
+          currentEquipmentType = null;
+          return;
+        }
+
+        // Where inside the image did we drop? (0–1 range)
+        const imgOffsetX = x - imgRect.left;
+        const imgOffsetY = y - imgRect.top;
+        const hitX = imgOffsetX / imgRect.width;
+        const hitY = imgOffsetY / imgRect.height;
+
+        // For visual placement, still place items at finger position relative to patientArea:
+        const offsetX = x - areaRect.left;
+        const offsetY = y - areaRect.top;
+
+        /* ---------- IV Bag logic (left arm only) ---------- */
+        if (currentEquipmentType === 'iv-bag') {
+          const armX = hitX >= 0.19 && hitX <= 0.31;
+          const armY = hitY >= 0.22 && hitY <= 0.65;
+          if (armX && armY) {
+            alert("IV Established");
+            placeItem(offsetX, offsetY, 'IV Bag');
+          } else {
+            alert("Incorrect IV site");
+          }
+          finish();
+          return;
+        }
+
+        /* ---------- Stethoscope logic (chest only) ---------- */
+        if (currentEquipmentType === 'stethoscope') {
+          const chestX = hitX >= 0.43 && hitX <= 0.57;
+          const chestY = hitY >= 0.18 && hitY <= 0.40;
+          if (chestX && chestY) {
+            alert("Heart sounds heard");
+            placeItem(offsetX, offsetY, 'Stethoscope');
+          } else {
+            alert("No heart sounds heard here");
+          }
+          finish();
+          return;
+        }
+
+        /* ---------- Defibrillator pad logic ---------- */
+        if (currentEquipmentType === 'defibrillator') {
+          // Patient's RIGHT (image left) upper chest pad
+          const rightPadX = hitX >= 0.28 && hitX <= 0.43;
+          const rightPadY = hitY >= 0.27 && hitY <= 0.42;
+
+          // Patient's LEFT (image right) lower chest/side pad
+          const leftPadX = hitX >= 0.57 && hitX <= 0.78;
+          const leftPadY = hitY >= 0.45 && hitY <= 0.70;
+
+          if (rightPadX && rightPadY && !padRightPlaced) {
+            padRightPlaced = true;
+            alert("Right pad placed");
+            placePad(offsetX, offsetY);
+          } else if (leftPadX && leftPadY && !padLeftPlaced) {
+            padLeftPlaced = true;
+            alert("Left pad placed");
+            placePad(offsetX, offsetY);
+          } else {
+            alert("Incorrect pad placement");
+          }
+
+          if (padRightPlaced && padLeftPlaced) {
+            showECG();
+          }
+          finish();
+          return;
+        }
+
+        finish();
+      }
+
+      /* ------ Helper functions ------ */
+      function placeItem(x, y, text) {
+        const label = document.createElement('div');
+        label.classList.add('dropped-item');
+        label.textContent = text;
+        label.style.left = x + 'px';
+        label.style.top = y + 'px';
+        patientArea.appendChild(label);
+      }
+
+      function placePad(x, y) {
+        const pad = document.createElement('div');
+        pad.classList.add('pad-icon');
+        pad.style.left = x + 'px';
+        pad.style.top = y + 'px';
+        patientArea.appendChild(pad);
+      }
+
+      function finish() {
+        patientArea.classList.remove('drag-over');
+        currentEquipmentType = null;
+      }
+
+      /* ------ Event listeners ------ */
+      equipmentItems.forEach(item => {
+        item.addEventListener('touchstart', startDrag, { passive: false });
+        item.addEventListener('mousedown', startDrag);
+      });
+
+      document.addEventListener('touchmove', moveDrag, { passive: false });
+      document.addEventListener('mousemove', moveDrag);
+
+      document.addEventListener('touchend', endDrag);
+      document.addEventListener('mouseup', endDrag);
+
+      if (resetButton) {
+        resetButton.addEventListener('click', () => {
+          const dropped = patientArea.querySelectorAll('.dropped-item, .pad-icon');
+          dropped.forEach(item => item.remove());
+          padLeftPlaced = false;
+          padRightPlaced = false;
+          resetECG();
+        });
+      }
+
+      resetECG();
+    });
+  </script>
 </body>
 </html>

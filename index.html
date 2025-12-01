@@ -293,12 +293,105 @@
       }
 
       function endDrag(e) {
-        if (!isDragging) return;
-        isDragging = false;
-        if (draggingEl) {
-          draggingEl.remove();
-          draggingEl = null;
-        }
+  if (!isDragging) return;
+  isDragging = false;
+
+  if (draggingEl) {
+    draggingEl.remove();
+    draggingEl = null;
+  }
+
+  const pos = getEventPosition(e);
+  const x = pos.x;
+  const y = pos.y;
+
+  // 🔴 IMPORTANT: use the BODY IMAGE rect, not the white box
+  const imgRect = patientImage.getBoundingClientRect();
+  const areaRect = patientArea.getBoundingClientRect();
+
+  const insideImage =
+    x >= imgRect.left && x <= imgRect.right &&
+    y >= imgRect.top && y <= imgRect.bottom;
+
+  if (!insideImage) {
+    patientArea.classList.remove('drag-over');
+    currentEquipmentType = null;
+    return;
+  }
+
+  // Convert drop position to % of the actual image
+  const imgOffsetX = x - imgRect.left;
+  const imgOffsetY = y - imgRect.top;
+  const hitX = imgOffsetX / imgRect.width;
+  const hitY = imgOffsetY / imgRect.height;
+
+  // Visual placement inside patient-area
+  const offsetX = x - areaRect.left;
+  const offsetY = y - areaRect.top;
+
+  /* ---------- IV Bag ---------- */
+  if (currentEquipmentType === 'iv-bag') {
+    const armX = hitX >= 0.19 && hitX <= 0.31;
+    const armY = hitY >= 0.22 && hitY <= 0.65;
+
+    if (armX && armY) {
+      alert("IV Established");
+      placeItem(offsetX, offsetY, "IV Bag");
+    } else {
+      alert("Incorrect IV site");
+    }
+    finish();
+    return;
+  }
+
+  /* ---------- Stethoscope ---------- */
+  if (currentEquipmentType === 'stethoscope') {
+    const chestX = hitX >= 0.43 && hitX <= 0.57;
+    const chestY = hitY >= 0.18 && hitY <= 0.40;
+
+    if (chestX && chestY) {
+      alert("Heart sounds heard");
+      placeItem(offsetX, offsetY, "Stethoscope");
+    } else {
+      alert("No heart sounds heard here");
+    }
+    finish();
+    return;
+  }
+
+  /* ---------- Defibrillator Pads ---------- */
+  if (currentEquipmentType === 'defibrillator') {
+    // Patient RIGHT (image LEFT)
+    const rightPadX = hitX >= 0.28 && hitX <= 0.43;
+    const rightPadY = hitY >= 0.27 && hitY <= 0.42;
+
+    // Patient LEFT (image RIGHT)
+    const leftPadX = hitX >= 0.57 && hitX <= 0.78;
+    const leftPadY = hitY >= 0.45 && hitY <= 0.70;
+
+    if (rightPadX && rightPadY && !padRightPlaced) {
+      padRightPlaced = true;
+      alert("Right pad placed");
+      placePad(offsetX, offsetY);
+    } else if (leftPadX && leftPadY && !padLeftPlaced) {
+      padLeftPlaced = true;
+      alert("Left pad placed");
+      placePad(offsetX, offsetY);
+    } else {
+      alert("Incorrect pad placement");
+    }
+
+    if (padRightPlaced && padLeftPlaced) {
+      showECG();
+    }
+
+    finish();
+    return;
+  }
+
+  finish();
+}
+
 
         const pos = getEventPosition(e);
         const x = pos.x;

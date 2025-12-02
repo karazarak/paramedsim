@@ -152,6 +152,21 @@
       box-shadow: 0 0 6px rgba(0,0,0,0.4);
     }
 
+    /* 🔴 Always-visible hitbox overlays */
+    .hitbox-overlay {
+      position: absolute;
+      border: 2px dashed rgba(239, 68, 68, 0.9); /* red outline */
+      background: rgba(239, 68, 68, 0.18);       /* faint red fill */
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .hitbox-overlay.left {
+      border-style: solid;
+      border-color: rgba(59,130,246,0.9);       /* blue-ish */
+      background: rgba(59,130,246,0.18);
+    }
+
     /* ECG monitor */
     .monitor {
       width: 260px;
@@ -236,12 +251,28 @@
       const resetButton   = document.getElementById('resetButton');
       const monitorScreen = document.getElementById('monitorScreen');
 
+      // 🔴 Single source of truth for pad hitboxes (fractions of body image)
+      const PAD_ZONES = {
+        right: { xMin: 0.28, xMax: 0.43, yMin: 0.22, yMax: 0.32 }, // your tweaked coords
+        left:  { xMin: 0.53, xMax: 0.60, yMin: 0.40, yMax: 0.50 }  // your tweaked coords
+      };
+
       let draggingEl = null;
       let currentEquipmentType = null;
       let isDragging = false;
 
       let padRightPlaced = false;
       let padLeftPlaced  = false;
+
+      // Overlays to visualize hit zones
+      let rightPadOverlay = document.createElement('div');
+      rightPadOverlay.className = 'hitbox-overlay right';
+
+      let leftPadOverlay = document.createElement('div');
+      leftPadOverlay.className = 'hitbox-overlay left';
+
+      patientArea.appendChild(rightPadOverlay);
+      patientArea.appendChild(leftPadOverlay);
 
       function showECG() {
         monitorScreen.innerHTML =
@@ -363,13 +394,14 @@
 
         /* ---------- Defibrillator Pads ---------- */
         if (currentEquipmentType === 'defibrillator') {
-          // Patient RIGHT (image LEFT) – your tweaked chest band
-          const rightPadX = hitX >= 0.28 && hitX <= 0.43;
-          const rightPadY = hitY >= 0.22 && hitY <= 0.32;
+          const zR = PAD_ZONES.right;
+          const zL = PAD_ZONES.left;
 
-          // Patient LEFT (image RIGHT) – unchanged
-          const leftPadX  = hitX >= 0.43 && hitX <= 0.53;
-          const leftPadY  = hitY >= 0.45 && hitY <= 0.55;
+          const rightPadX = hitX >= zR.xMin && hitX <= zR.xMax;
+          const rightPadY = hitY >= zR.yMin && hitY <= zR.yMax;
+
+          const leftPadX  = hitX >= zL.xMin && hitX <= zL.xMax;
+          const leftPadY  = hitY >= zL.yMin && hitY <= zL.yMax;
 
           if (rightPadX && rightPadY && !padRightPlaced) {
             padRightPlaced = true;
@@ -416,6 +448,29 @@
         currentEquipmentType = null;
       }
 
+      // 🔴 Draw / update the hitbox overlays so you can see the zones
+      function updateHitboxOverlays() {
+        const imgRect  = patientImage.getBoundingClientRect();
+        const areaRect = patientArea.getBoundingClientRect();
+
+        if (imgRect.width === 0 || imgRect.height === 0) return;
+
+        function positionOverlay(el, zone) {
+          const left   = imgRect.left - areaRect.left + zone.xMin * imgRect.width;
+          const top    = imgRect.top  - areaRect.top  + zone.yMin * imgRect.height;
+          const width  = (zone.xMax - zone.xMin) * imgRect.width;
+          const height = (zone.yMax - zone.yMin) * imgRect.height;
+
+          el.style.left   = left + 'px';
+          el.style.top    = top  + 'px';
+          el.style.width  = width + 'px';
+          el.style.height = height + 'px';
+        }
+
+        positionOverlay(rightPadOverlay, PAD_ZONES.right);
+        positionOverlay(leftPadOverlay,  PAD_ZONES.left);
+      }
+
       /* ------ Event listeners (pointer-based) ------ */
       equipmentItems.forEach(item => {
         item.addEventListener('pointerdown', startDrag);
@@ -434,8 +489,13 @@
         });
       }
 
+      // Keep overlays in the right place as layout / window size changes
+      window.addEventListener('resize', updateHitboxOverlays);
+      updateHitboxOverlays();
+
       resetECG();
     });
   </script>
 </body>
 </html>
+

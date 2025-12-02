@@ -43,6 +43,7 @@
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
+      touch-action: none;
     }
 
     .equipment-item:active {
@@ -227,12 +228,12 @@
     </div>
   </div>
 
-   <script>
+  <script>
     window.addEventListener('load', () => {
       const equipmentItems = document.querySelectorAll('.equipment-item');
-      const patientArea = document.getElementById('patientArea');
-      const patientImage = document.getElementById('patientImage');
-      const resetButton = document.getElementById('resetButton');
+      const patientArea   = document.getElementById('patientArea');
+      const patientImage  = document.getElementById('patientImage');
+      const resetButton   = document.getElementById('resetButton');
       const monitorScreen = document.getElementById('monitorScreen');
 
       let draggingEl = null;
@@ -240,7 +241,7 @@
       let isDragging = false;
 
       let padRightPlaced = false;
-      let padLeftPlaced = false;
+      let padLeftPlaced  = false;
 
       function showECG() {
         monitorScreen.innerHTML =
@@ -253,11 +254,7 @@
       }
 
       function getEventPosition(e) {
-        if (e.touches && e.touches[0]) {
-          return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        } else {
-          return { x: e.clientX, y: e.clientY };
-        }
+        return { x: e.clientX, y: e.clientY };
       }
 
       function startDrag(e) {
@@ -271,8 +268,12 @@
         draggingEl.classList.add('drag-preview');
         draggingEl.textContent = item.textContent.trim();
         draggingEl.style.left = pos.x + 'px';
-        draggingEl.style.top = pos.y + 'px';
+        draggingEl.style.top  = pos.y + 'px';
         document.body.appendChild(draggingEl);
+
+        if (item.setPointerCapture) {
+          item.setPointerCapture(e.pointerId);
+        }
       }
 
       function moveDrag(e) {
@@ -284,7 +285,7 @@
         const y = pos.y;
 
         draggingEl.style.left = x + 'px';
-        draggingEl.style.top = y + 'px';
+        draggingEl.style.top  = y + 'px';
 
         const rect = patientArea.getBoundingClientRect();
         if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
@@ -307,15 +308,12 @@
         const x = pos.x;
         const y = pos.y;
 
-        // Use the BODY IMAGE rect (not the whole white box)
-        const imgRect = patientImage.getBoundingClientRect();
+        const imgRect  = patientImage.getBoundingClientRect();
         const areaRect = patientArea.getBoundingClientRect();
 
         const insideImage =
-          x >= imgRect.left &&
-          x <= imgRect.right &&
-          y >= imgRect.top &&
-          y <= imgRect.bottom;
+          x >= imgRect.left && x <= imgRect.right &&
+          y >= imgRect.top  && y <= imgRect.bottom;
 
         if (!insideImage) {
           patientArea.classList.remove('drag-over');
@@ -323,7 +321,7 @@
           return;
         }
 
-        // Convert drop position to % of the actual image
+        // Convert drop position to % of the actual image (0–1)
         const imgOffsetX = x - imgRect.left;
         const imgOffsetY = y - imgRect.top;
         const hitX = imgOffsetX / imgRect.width;
@@ -333,7 +331,7 @@
         const offsetX = x - areaRect.left;
         const offsetY = y - areaRect.top;
 
-        /* ---------- IV Bag ---------- */
+        /* ---------- IV Bag (left arm) ---------- */
         if (currentEquipmentType === 'iv-bag') {
           const armX = hitX >= 0.19 && hitX <= 0.31;
           const armY = hitY >= 0.22 && hitY <= 0.65;
@@ -348,7 +346,7 @@
           return;
         }
 
-        /* ---------- Stethoscope ---------- */
+        /* ---------- Stethoscope (chest only) ---------- */
         if (currentEquipmentType === 'stethoscope') {
           const chestX = hitX >= 0.43 && hitX <= 0.57;
           const chestY = hitY >= 0.18 && hitY <= 0.40;
@@ -365,13 +363,13 @@
 
         /* ---------- Defibrillator Pads ---------- */
         if (currentEquipmentType === 'defibrillator') {
-          // Patient RIGHT (image LEFT) – you changed Y here
+          // Patient RIGHT (image LEFT) – your tweaked chest band
           const rightPadX = hitX >= 0.28 && hitX <= 0.43;
-          const rightPadY = hitY >= 0.22 && hitY <= 0.32; // your adjusted band
+          const rightPadY = hitY >= 0.22 && hitY <= 0.32;
 
-          // Patient LEFT (image RIGHT)
-          const leftPadX = hitX >= 0.57 && hitX <= 0.78;
-          const leftPadY = hitY >= 0.45 && hitY <= 0.70;
+          // Patient LEFT (image RIGHT) – unchanged
+          const leftPadX  = hitX >= 0.57 && hitX <= 0.78;
+          const leftPadY  = hitY >= 0.45 && hitY <= 0.70;
 
           if (rightPadX && rightPadY && !padRightPlaced) {
             padRightPlaced = true;
@@ -388,7 +386,6 @@
           if (padRightPlaced && padLeftPlaced) {
             showECG();
           }
-
           finish();
           return;
         }
@@ -402,7 +399,7 @@
         label.classList.add('dropped-item');
         label.textContent = text;
         label.style.left = x + 'px';
-        label.style.top = y + 'px';
+        label.style.top  = y + 'px';
         patientArea.appendChild(label);
       }
 
@@ -410,7 +407,7 @@
         const pad = document.createElement('div');
         pad.classList.add('pad-icon');
         pad.style.left = x + 'px';
-        pad.style.top = y + 'px';
+        pad.style.top  = y + 'px';
         patientArea.appendChild(pad);
       }
 
@@ -419,23 +416,19 @@
         currentEquipmentType = null;
       }
 
-      /* ------ Event listeners ------ */
+      /* ------ Event listeners (pointer-based) ------ */
       equipmentItems.forEach(item => {
-        item.addEventListener('touchstart', startDrag, { passive: false });
-        item.addEventListener('mousedown', startDrag);
+        item.addEventListener('pointerdown', startDrag);
       });
 
-      document.addEventListener('touchmove', moveDrag, { passive: false });
-      document.addEventListener('mousemove', moveDrag);
-
-      document.addEventListener('touchend', endDrag);
-      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('pointermove', moveDrag);
+      document.addEventListener('pointerup',   endDrag);
 
       if (resetButton) {
         resetButton.addEventListener('click', () => {
           const dropped = patientArea.querySelectorAll('.dropped-item, .pad-icon');
           dropped.forEach(item => item.remove());
-          padLeftPlaced = false;
+          padLeftPlaced  = false;
           padRightPlaced = false;
           resetECG();
         });
@@ -444,4 +437,5 @@
       resetECG();
     });
   </script>
-
+</body>
+</html>

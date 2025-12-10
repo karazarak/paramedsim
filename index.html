@@ -152,7 +152,7 @@
       box-shadow: 0 0 6px rgba(0,0,0,0.4);
     }
 
-    /* 🔴 Always-visible hitbox overlays */
+    /* Hitbox overlays (for your visual debugging) */
     .hitbox-overlay {
       position: absolute;
       border: 2px dashed rgba(239, 68, 68, 0.9); /* red outline */
@@ -209,6 +209,51 @@
       color: #22c55e;
       white-space: pre;
     }
+
+    /* ===== IV ARM OVERLAY ===== */
+    .iv-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .iv-overlay.hidden {
+      display: none;
+    }
+
+    .iv-overlay-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      background: #111827;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .iv-overlay-content img {
+      display: block;
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 8px;
+    }
+
+    .iv-close-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      border: none;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #f97316;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -243,6 +288,15 @@
     </div>
   </div>
 
+  <!-- IV ARM POPUP -->
+  <div id="ivOverlay" class="iv-overlay hidden">
+    <div class="iv-overlay-content">
+      <button id="ivCloseBtn" class="iv-close-btn">Close</button>
+      <!-- 👇 Update src to match your arm image filename or URL -->
+      <img src="iv-arm.png" alt="IV arm">
+    </div>
+  </div>
+
   <script>
     window.addEventListener('load', () => {
       const equipmentItems = document.querySelectorAll('.equipment-item');
@@ -251,10 +305,13 @@
       const resetButton   = document.getElementById('resetButton');
       const monitorScreen = document.getElementById('monitorScreen');
 
-      // 🔴 Single source of truth for pad hitboxes (fractions of body image)
+      const ivOverlay   = document.getElementById('ivOverlay');
+      const ivCloseBtn  = document.getElementById('ivCloseBtn');
+
+      // Single source of truth for pad hitboxes (fractions of body image)
       const PAD_ZONES = {
-        right: { xMin: 0.28, xMax: 0.43, yMin: 0.22, yMax: 0.32 }, // your tweaked coords
-        left:  { xMin: 0.55, xMax: 0.68, yMin: 0.30, yMax: 0.45 }  // your tweaked coords
+        right: { xMin: 0.28, xMax: 0.43, yMin: 0.22, yMax: 0.32 },
+        left:  { xMin: 0.55, xMax: 0.68, yMin: 0.30, yMax: 0.45 }
       };
 
       let draggingEl = null;
@@ -264,7 +321,7 @@
       let padRightPlaced = false;
       let padLeftPlaced  = false;
 
-      // Overlays to visualize hit zones
+      // Overlays to visualize pad hit zones
       let rightPadOverlay = document.createElement('div');
       rightPadOverlay.className = 'hitbox-overlay right';
 
@@ -368,8 +425,12 @@
           const armY = hitY >= 0.22 && hitY <= 0.65;
 
           if (armX && armY) {
-            alert('IV Established');
+            // Optional: still drop a label on the patient
             placeItem(offsetX, offsetY, 'IV Bag');
+            // 👉 Show the IV arm overlay instead of alert
+            if (ivOverlay) {
+              ivOverlay.classList.remove('hidden');
+            }
           } else {
             alert('Incorrect IV site');
           }
@@ -394,15 +455,11 @@
 
         /* ---------- Defibrillator Pads ---------- */
         if (currentEquipmentType === 'defibrillator') {
-          const zR = PAD_ZONES.right;
-          const zL = PAD_ZONES.left;
+          const rightPadX = hitX >= PAD_ZONES.right.xMin && hitX <= PAD_ZONES.right.xMax;
+          const rightPadY = hitY >= PAD_ZONES.right.yMin && hitY <= PAD_ZONES.right.yMax;
 
-          const rightPadX = hitX >= 0.28 && hitX <= 0.43;
-          const rightPadY = hitY >= 0.22 && hitY <= 0.32;
-
-          // Patient LEFT (image RIGHT) – unchanged
-          const leftPadX  = hitX >= 0.57 && hitX <= 0.78;
-          const leftPadY  = hitY >= 0.45 && hitY <= 0.70;
+          const leftPadX  = hitX >= PAD_ZONES.left.xMin && hitX <= PAD_ZONES.left.xMax;
+          const leftPadY  = hitY >= PAD_ZONES.left.yMin && hitY <= PAD_ZONES.left.yMax;
 
           if (rightPadX && rightPadY && !padRightPlaced) {
             padRightPlaced = true;
@@ -449,7 +506,7 @@
         currentEquipmentType = null;
       }
 
-      // 🔴 Draw / update the hitbox overlays so you can see the zones
+      // Draw / update the hitbox overlays so you can see the zones
       function updateHitboxOverlays() {
         const imgRect  = patientImage.getBoundingClientRect();
         const areaRect = patientArea.getBoundingClientRect();
@@ -490,8 +547,22 @@
         });
       }
 
+      // IV overlay close behaviour
+      if (ivCloseBtn && ivOverlay) {
+        ivCloseBtn.addEventListener('click', () => {
+          ivOverlay.classList.add('hidden');
+        });
+        // click on dark background also closes
+        ivOverlay.addEventListener('click', (e) => {
+          if (e.target === ivOverlay) {
+            ivOverlay.classList.add('hidden');
+          }
+        });
+      }
+
       // Keep overlays in the right place as layout / window size changes
       window.addEventListener('resize', updateHitboxOverlays);
+      patientImage.addEventListener('load', updateHitboxOverlays);
       updateHitboxOverlays();
 
       resetECG();
@@ -499,4 +570,3 @@
   </script>
 </body>
 </html>
-

@@ -1,0 +1,153 @@
+/* Simple, readable styling for the IV cannulation simulation MVP */
+
+/* Base layout */
+:root{
+  --panel-bg: #f7f9fc;
+  --accent: #2b8cff;
+  --success: #2fbf71;
+  --danger: #e04b4b;
+  --muted: #666;
+  --card: #fff;
+}
+
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg,#eef4ff 0%, #ffffff 100%);
+  color: #111;
+}
+
+header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
+}
+
+header h1 { margin: 0; font-size: 20px; }
+.subtitle { margin: 4px 0 0 0; color: #444; font-size: 13px; }
+
+#app {
+  display: grid;
+  grid-template-columns: 320px 1fr 360px;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Panels */
+.panel {
+  background: var(--panel-bg);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 520px;
+  box-shadow: 0 2px 6px rgba(16,24,40,0.04);
+}
+
+.panel h2 { margin-top: 0; font-size: 16px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+/* Inventory items */
+.item-card {
+  background: var(--card);
+  border: 1px solid #e6eefc;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.item-card.collected {
+  border-color: #d1f6e4;
+  box-shadow: 0 1px 0 rgba(47,191,113,0.06) inset;
+  opacity: 0.9;
+}
+.item-card.selected {
+  outline: 3px solid rgba(43,140,255,0.12);
+}
+
+.item-label { flex: 1; font-size: 14px; }
+.item-check { font-size: 14px; color: var(--muted); }
+
+/* Actions */
+.actions { margin-top: 12px; display:flex; flex-direction:column; gap:8px; }
+.action-btn {
+  background: white;
+  border: 1px solid #dbeafe;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.action-btn:active { transform: translateY(1px); }
+
+.syringe-actions { display:flex; gap:8px; }
+
+/* Arm area */
+#arm-area { background: #fff; border: 1px solid #edf2f7; padding: 12px; border-radius: 8px; }
+#arm-svg { width: 100%; height: 520px; }
+
+/* Arm regions */
+.arm-region {
+  fill: #f3f6ff;
+  stroke: #cde0ff;
+  stroke-width: 2;
+  cursor: pointer;
+}
+.arm-region:hover { fill: #e6f0ff; }
+.arm-region.selected { fill: #dff3ff; stroke: #7fd3ff; }
+
+/* Labels */
+.region-label { font-size: 12px; fill: #1f2937; pointer-events:none; }
+
+/* Swelling animation handled via transition on radius */
+#swelling-indicator { transition: r 0.6s ease; }
+
+/* Right panel content */
+#steps-ol { padding-left: 18px; }
+.step-item {
+  margin-bottom: 6px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #eef2ff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+.step-item.completed {
+  border-color: rgba(47,191,113,0.25);
+  background: linear-gradient(90deg,#f0fff6 0%, #ffffff 100%);
+}
+.step-title { font-size: 13px; color:#111; }
+.step-status { font-size: 12px; color: var(--muted); }
+
+/* Feedback */
+.feedback {
+  min-height: 80px;
+  margin-top: 8px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #f0f3ff;
+  color: #111;
+  font-size: 14px;
+}
+.feedback .error { color: var(--danger); font-weight:600; }
+.feedback .success { color: var(--success); font-weight:600; }
+
+/* Controls */
+#controls { margin-top: 12px; display:flex; gap:8px; }
+#hint-btn { background:#fff3c4; border:1px solid #ffe1a8; padding:8px; border-radius:6px; cursor:pointer; }
+#reset-btn { background:#fff; border:1px solid #e6eefc; padding:8px; border-radius:6px; cursor:pointer; }
+
+/* Misc */
+.muted { color: var(--muted); font-size: 13px; }
+.small { font-size: 12px; }
+footer { padding: 12px 16px; color: var(--muted); border-top: 1px solid #eef2f7; background: white; }

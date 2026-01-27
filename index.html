@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IV Cannulation Simulation (MVP)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>IV Cannulation Simulation — MVP</h1>
+    <p class="subtitle">Click equipment and actions in the correct order. Wrong moves give explanations and how to fix them.</p>
+  </header>
+
+  <main id="app">
+    <!-- Left: Equipment Tray -->
+    <section id="left-panel" class="panel">
+      <h2>Equipment Tray</h2>
+      <div id="inventory-grid" class="grid"></div>
+
+      <div id="selected-item-box">
+        <strong>Selected item:</strong> <span id="selected-item">None</span>
+      </div>
+
+      <div class="actions">
+        <button id="action-apply-tourniquet" class="action-btn">Apply Tourniquet (or click arm)</button>
+        <button id="action-release-tourniquet" class="action-btn">Release Tourniquet</button>
+        <button id="action-open-cannula" class="action-btn">Open Cannula</button>
+        <button id="action-insert-cannula" class="action-btn">Insert Cannula</button>
+        <button id="action-dispose-sharps" class="action-btn">Dispose Sharps</button>
+        <button id="action-attach-bung" class="action-btn">Attach Bung</button>
+        <button id="action-apply-dressing" class="action-btn">Apply Dressing</button>
+        <div class="syringe-actions">
+          <button id="action-fill-syringe" class="action-btn">Fill Syringe</button>
+          <button id="action-flush" class="action-btn">Flush Cannula</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Middle: Patient Arm Area -->
+    <section id="middle-panel" class="panel">
+      <h2>Patient Arm Area</h2>
+      <div id="arm-area" aria-label="Patient arm" title="Click a region to select cannulation site">
+        <!-- Simplified arm diagram with 4 clickable regions -->
+        <svg id="arm-svg" viewBox="0 0 300 500" role="img" aria-labelledby="armTitle">
+          <title id="armTitle">Simplified patient arm diagram</title>
+
+          <!-- Upper arm -->
+          <rect id="region-upperarm" class="arm-region" x="90" y="20" width="120" height="100" rx="18" />
+          <text x="150" y="75" text-anchor="middle" class="region-label">Upper arm</text>
+
+          <!-- Antecubital fossa -->
+          <rect id="region-antecubital" class="arm-region" x="70" y="140" width="160" height="80" rx="12" />
+          <text x="150" y="185" text-anchor="middle" class="region-label">Antecubital</text>
+
+          <!-- Forearm -->
+          <rect id="region-forearm" class="arm-region" x="85" y="240" width="130" height="120" rx="12" />
+          <text x="150" y="300" text-anchor="middle" class="region-label">Forearm</text>
+
+          <!-- Hand -->
+          <rect id="region-hand" class="arm-region" x="110" y="380" width="80" height="90" rx="12" />
+          <text x="150" y="435" text-anchor="middle" class="region-label">Hand</text>
+
+          <!-- Swelling indicator (hidden normally) -->
+          <circle id="swelling-indicator" cx="150" cy="300" r="0" fill="rgba(255,0,0,0.25)" />
+          <text id="swelling-label" x="150" y="270" text-anchor="middle" fill="#900" class="swelling-label" visibility="hidden">SWELLING</text>
+        </svg>
+      </div>
+
+      <div id="site-info">
+        <strong>Selected site:</strong> <span id="selected-site">None</span>
+        <div id="site-viability" class="muted"></div>
+      </div>
+    </section>
+
+    <!-- Right: Checklist / Progress + Feedback -->
+    <aside id="right-panel" class="panel">
+      <h2>Checklist & Feedback</h2>
+
+      <div id="current-step-box">
+        <strong>Current step:</strong>
+        <div id="current-step">Gather equipment</div>
+      </div>
+
+      <div id="steps-list">
+        <h3>Steps</h3>
+        <ol id="steps-ol"></ol>
+      </div>
+
+      <div id="messages">
+        <h3>Messages</h3>
+        <div id="feedback" class="feedback"></div>
+      </div>
+
+      <div id="controls">
+        <button id="hint-btn">Hint</button>
+        <button id="reset-btn">Reset (new run)</button>
+      </div>
+
+      <div id="state-debug" class="muted small">State debug available in console (app.js)</div>
+    </aside>
+  </main>
+
+  <footer>
+    <small>Designed as a local single-page training simulation. No backend required.</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

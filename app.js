@@ -793,4 +793,42 @@ resetState(); // initialize state and render
 window._ivSimState = state;
 window._ivSimReset = resetState;
 
+// --- Start overlay (click hotspots to collect equipment) ---
+const startOverlay = document.getElementById("start-overlay");
+const overlayStatus = document.getElementById("overlay-status");
+const startBtn = document.getElementById("start-btn");
+const hotspots = Array.from(document.querySelectorAll(".hotspot"));
+
+function updateOverlayStatus() {
+  const collectedCount = REQUIRED_ITEMS.filter(item => state.inventory.has(item)).length;
+  overlayStatus.textContent = `Collected: ${collectedCount} / ${REQUIRED_ITEMS.length}`;
+
+  const allCollected = collectedCount === REQUIRED_ITEMS.length;
+  startBtn.disabled = !allCollected;
+}
+
+hotspots.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const item = btn.dataset.item;
+    if (!item) return;
+
+    state.inventory.add(item);
+    btn.classList.add("collected");
+
+    // Optional: stop clicking the same hotspot repeatedly
+    btn.disabled = true;
+
+    // Update the main UI too
+    render();
+    updateOverlayStatus();
+  });
+});
+
+startBtn.addEventListener("click", () => {
+  startOverlay.style.display = "none";
+});
+
+// On first load, ensure overlay status matches state
+updateOverlayStatus();
+
 /* End of app.js */

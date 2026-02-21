@@ -7,6 +7,38 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- START SCREEN OVERLAY -->
+<div id="start-overlay" class="overlay">
+  <div class="overlay-card">
+    <h2>Select your equipment</h2>
+    <p>Tap each item in the kit photo to collect it. You must collect everything to begin.</p>
+
+    <div class="kit-wrap">
+      <!-- Replace this with your own kit image file name -->
+      <img id="kit-image" src="kit.jpg" alt="IV kit photo">
+
+      <!-- HOTSPOTS (positions are examples—adjust them) -->
+      <button class="hotspot" data-item="alcohol swab" style="left:10%; top:20%; width:12%; height:10%;" aria-label="Alcohol swab"></button>
+      <button class="hotspot" data-item="bung" style="left:25%; top:20%; width:10%; height:10%;" aria-label="Bung"></button>
+      <button class="hotspot" data-item="cannula" style="left:40%; top:20%; width:12%; height:10%;" aria-label="Cannula"></button>
+      <button class="hotspot" data-item="tegaderm" style="left:55%; top:20%; width:12%; height:10%;" aria-label="Tegaderm"></button>
+
+      <button class="hotspot" data-item="elastic tourniquet" style="left:10%; top:40%; width:15%; height:10%;" aria-label="Tourniquet"></button>
+      <button class="hotspot" data-item="10 mL fluids (saline)" style="left:30%; top:40%; width:15%; height:10%;" aria-label="10 mL fluids"></button>
+      <button class="hotspot" data-item="10 mL syringe" style="left:50%; top:40%; width:15%; height:10%;" aria-label="10 mL syringe"></button>
+
+      <button class="hotspot" data-item="gloves" style="left:10%; top:60%; width:15%; height:12%;" aria-label="Gloves"></button>
+      <button class="hotspot" data-item="goggles" style="left:30%; top:60%; width:15%; height:12%;" aria-label="Goggles"></button>
+      <button class="hotspot" data-item="sharps bin" style="left:50%; top:60%; width:18%; height:12%;" aria-label="Sharps bin"></button>
+    </div>
+
+    <div class="overlay-footer">
+      <div id="overlay-status" class="overlay-status">Collected: 0 / 10</div>
+      <button id="start-btn" class="start-btn" disabled>Start simulation</button>
+    </div>
+  </div>
+</div>
+<!-- END START SCREEN OVERLAY -->
   <header>
     <h1>IV Cannulation Simulation — MVP</h1>
     <p class="subtitle">Click equipment and actions in the correct order. Wrong moves give explanations and how to fix them.</p>

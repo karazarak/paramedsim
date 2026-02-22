@@ -798,6 +798,7 @@ const startOverlay = document.getElementById("start-overlay");
 const overlayStatus = document.getElementById("overlay-status");
 const startBtn = document.getElementById("start-btn");
 const hotspots = Array.from(document.querySelectorAll(".hotspot"));
+const overlayChecklist = document.getElementById("overlay-checklist");
 
 function updateOverlayStatus() {
   const collectedCount = REQUIRED_ITEMS.filter(item => state.inventory.has(item)).length;
@@ -820,15 +821,35 @@ hotspots.forEach(btn => {
 
     // Update the main UI too
     render();
-    updateOverlayStatus();
-  });
-});
+   function formatItemLabel(item) {
+  // Optional: nicer labels
+  const map = {
+    "10 mL fluids (saline)": "10 mL fluids",
+    "10 mL syringe": "10 mL syringe",
+    "elastic tourniquet": "Tourniquet",
+  };
+  return map[item] || item;
+}
 
-startBtn.addEventListener("click", () => {
-  startOverlay.style.display = "none";
-});
+function updateOverlayStatus() {
+  const collectedCount = OVERLAY_REQUIRED_ITEMS.filter(item => state.inventory.has(item)).length;
 
-// On first load, ensure overlay status matches state
-updateOverlayStatus();
+  // Counter text
+  overlayStatus.textContent = `Collected: ${collectedCount} / ${OVERLAY_REQUIRED_ITEMS.length}`;
 
-/* End of app.js */
+  // Enable Start when complete
+  startBtn.disabled = collectedCount !== OVERLAY_REQUIRED_ITEMS.length;
+
+  // NEW: checklist rendering
+  overlayChecklist.innerHTML = OVERLAY_REQUIRED_ITEMS.map(item => {
+    const done = state.inventory.has(item);
+    const icon = done ? "✓" : "✗";
+    const cls = done ? "overlay-check-item done" : "overlay-check-item";
+    return `
+      <div class="${cls}">
+        <span class="overlay-check-icon">${icon}</span>
+        <span>${formatItemLabel(item)}</span>
+      </div>
+    `;
+  }).join("");
+}

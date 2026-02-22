@@ -151,7 +151,10 @@ header h1 { margin: 0; font-size: 20px; }
 .muted { color: var(--muted); font-size: 13px; }
 .small { font-size: 12px; }
 footer { padding: 12px 16px; color: var(--muted); border-top: 1px solid #eef2f7; background: white; }
-/* Start overlay */
+
+/* -------------------------
+   Start overlay
+   ------------------------- */
 .overlay {
   position: fixed;
   inset: 0;
@@ -189,18 +192,14 @@ footer { padding: 12px 16px; color: var(--muted); border-top: 1px solid #eef2f7;
 /* Invisible clickable hotspots */
 .hotspot{
   position: absolute;
-  border: 2px solid rgba(0, 150, 255, 0.0); /* invisible border */
-  background: rgba(0, 150, 255, 0.0);       /* invisible fill */
+  border: 2px solid rgba(0, 150, 255, 0.0);
+  background: rgba(0, 150, 255, 0.0);
   cursor: pointer;
   border-radius: 8px;
-  z-index: 5;               /* keep above the image so taps work */
+  z-index: 5;
   touch-action: manipulation;
 }
-
-/* Optional: you can remove this entirely */
-.hotspot:active{
-  transform: scale(0.99);
-}
+.hotspot:active{ transform: scale(0.99); }
 
 .hotspot.collected {
   background: rgba(0, 200, 120, 0.25);
@@ -219,6 +218,7 @@ footer { padding: 12px 16px; color: var(--muted); border-top: 1px solid #eef2f7;
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 .overlay-left {
   display: flex;
   flex-direction: column;
@@ -227,7 +227,7 @@ footer { padding: 12px 16px; color: var(--muted); border-top: 1px solid #eef2f7;
 
 .overlay-checklist {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 2 columns */
+  grid-template-columns: 1fr 1fr;
   gap: 6px 16px;
   font-size: 14px;
 }
@@ -245,33 +245,102 @@ footer { padding: 12px 16px; color: var(--muted); border-top: 1px solid #eef2f7;
   font-weight: 700;
 }
 
-.overlay-check-item.done .overlay-check-icon {
-  /* turns ✓ green-ish via existing theme; if you want a specific color tell me */
-}
 /* Prevent background scroll when overlay is open */
-body.overlay-open {
+body.overlay-open { overflow: hidden; }
+
+/* -------------------------
+   Drag & Drop stage
+   ------------------------- */
+.hidden { display: none !important; }
+
+.drag-stage{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+.drag-left, .drag-right{
+  background: var(--panel-bg);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 520px;
+  box-shadow: 0 2px 6px rgba(16,24,40,0.04);
+}
+
+.drag-items{
+  position: relative;
+  min-height: 420px;
+  background: #fff;
+  border: 1px solid #e6eefc;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.draggable{
+  display: inline-block;
+  padding: 10px 12px;
+  margin: 8px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none; /* iPad dragging */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  font-weight: 600;
+}
+
+.draggable.dragging{
+  cursor: grabbing;
+  opacity: 0.95;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+.draggable.placed{
+  border-color: rgba(47,191,113,0.55);
+  background: rgba(47,191,113,0.10);
+}
+
+.arm-zone-wrap{
+  position: relative;
+  background: #fff;
+  border: 1px solid #e6eefc;
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 520px;
   overflow: hidden;
 }
 
-/* Ensure overlay always covers the viewport on mobile Safari */
-.overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;              /* allows scrolling inside the overlay if needed */
-  -webkit-overflow-scrolling: touch;
+.narration{
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 20;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #e6eefc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 800;
 }
 
+.arm-image{
+  width: 100%;
+  height: 520px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
 
+.arm-zone{
+  width: 100%;
+  height: 520px;
+  display: block;
+}
 
-
-
-
-
-
-
-
-
-
-
+.arm-drop-zone{
+  position: absolute;
+  inset: 0;
+  z-index: 15; /* above image so we can detect drops */
+}

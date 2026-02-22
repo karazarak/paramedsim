@@ -54,14 +54,6 @@ let state = {
 
 /* -------------------------
    Steps / State Machine
-   Each step has:
-     - id
-     - title
-     - requiredAction (human-readable)
-     - successMessage
-     - failMessage
-     - isComplete(state) => boolean
-     - hint (one-line)
    ------------------------- */
 
 const steps = [
@@ -74,7 +66,6 @@ const steps = [
     isComplete: (s) => REQUIRED_EQUIPMENT.every((i) => s.inventory.has(i)),
     hint: "Click the equipment items on the left until all are green/collected.",
   },
-
   {
     id: "select-site",
     title: "Select cannulation site",
@@ -84,7 +75,6 @@ const steps = [
     isComplete: (s) => Boolean(s.selectedSite) && s.viableSites.includes(s.selectedSite),
     hint: "Click a region on the arm (hand, forearm, or antecubital). Viable sites are randomized each run.",
   },
-
   {
     id: "apply-tourniquet",
     title: "Apply tourniquet",
@@ -94,7 +84,6 @@ const steps = [
     isComplete: (s) => s.tourniquetOn === true,
     hint: "Click the 'elastic tourniquet' item then click 'Apply Tourniquet' or click the arm.",
   },
-
   {
     id: "clean-site",
     title: "Clean site",
@@ -104,7 +93,6 @@ const steps = [
     isComplete: (s) => s.siteCleaned === true,
     hint: "Select the alcohol swab from inventory then click the selected site on the arm.",
   },
-
   {
     id: "open-cannula",
     title: "Open cannula",
@@ -114,7 +102,6 @@ const steps = [
     isComplete: (s) => s.cannulaOpened === true,
     hint: "Click the 'cannula' item, then click 'Open Cannula'.",
   },
-
   {
     id: "insert-cannula",
     title: "Insert cannula",
@@ -126,7 +113,6 @@ const steps = [
     isComplete: (s) => s.cannulaIn === true,
     hint: "Choose an angle of 10° or 20° when inserting. 45° will fail.",
   },
-
   {
     id: "release-tourniquet",
     title: "Release tourniquet",
@@ -136,7 +122,6 @@ const steps = [
     isComplete: (s) => s.tourniquetOff === true,
     hint: "Click 'Release Tourniquet' to remove it after successful insertion.",
   },
-
   {
     id: "dispose-sharps",
     title: "Dispose stylet/sharp",
@@ -146,7 +131,6 @@ const steps = [
     isComplete: (s) => s.styletDisposed === true,
     hint: "Collect 'sharps bin' from the tray earlier, then choose 'Dispose Sharps'.",
   },
-
   {
     id: "attach-bung",
     title: "Attach bung",
@@ -156,7 +140,6 @@ const steps = [
     isComplete: (s) => s.bungOn === true,
     hint: "Make sure the cannula is in, stylet disposed, and tourniquet released; then attach the bung.",
   },
-
   {
     id: "apply-dressing",
     title: "Apply tegaderm dressing",
@@ -166,7 +149,6 @@ const steps = [
     isComplete: (s) => s.dressingOn === true,
     hint: "Click 'tegaderm' in inventory and then 'Apply Dressing'.",
   },
-
   {
     id: "fill-syringe",
     title: "Fill 10 mL syringe",
@@ -176,7 +158,6 @@ const steps = [
     isComplete: (s) => s.syringeFilled === true,
     hint: "Click '10 mL fluids (saline)' then '10 mL syringe' then 'Fill Syringe'.",
   },
-
   {
     id: "flush",
     title: "Flush cannula",
@@ -204,6 +185,7 @@ const hintBtn = document.getElementById("hint-btn");
 const resetBtn = document.getElementById("reset-btn");
 
 const actionApplyTourniquetBtn = document.getElementById("action-apply-tourniquet");
+const actionCleanSiteBtn = document.getElementById("action-clean-site");
 const actionReleaseTourniquetBtn = document.getElementById("action-release-tourniquet");
 const actionOpenCannulaBtn = document.getElementById("action-open-cannula");
 const actionInsertCannulaBtn = document.getElementById("action-insert-cannula");
@@ -222,6 +204,14 @@ const armRegions = {
 };
 const swellingIndicator = document.getElementById("swelling-indicator");
 const swellingLabel = document.getElementById("swelling-label");
+
+/* Drag stage elements */
+const dragStage = document.getElementById("drag-stage");
+const simStage = document.getElementById("app");
+const dragItems = document.getElementById("drag-items");
+const narrationBox = document.getElementById("narration");
+const armDropZone = document.getElementById("arm-drop-zone");
+const continueToSimBtn = document.getElementById("continue-to-sim");
 
 /* -------------------------
    Helpers
@@ -246,18 +236,21 @@ function setMessage(text, type = "info") {
   console.log("[MSG]", type.toUpperCase(), text);
 }
 
+function capitalize(s) {
+  if (!s) return s;
+  return s[0].toUpperCase() + s.slice(1);
+}
+
 /* -------------------------
    Initialization / Reset
    ------------------------- */
 
 function resetState() {
-  // Reset all state fields
   state.inventory = new Set();
   state.selectedItem = null;
   state.selectedSite = null;
-  // Randomly pick viable sites (light randomness: choose 2 of 3 common ones hand/forearm/antecubital)
   state.viableSites = pickRandom(["hand", "forearm", "antecubital"], 2);
-  // Always include upperarm as a non-viable option (for advanced scenarios)
+
   state.tourniquetOn = false;
   state.tourniquetOff = false;
   state.siteCleaned = false;
@@ -269,9 +262,10 @@ function resetState() {
   state.syringeFilled = false;
   state.flushed = false;
   state.swelling = false;
+
   state.message = "";
   state.messageType = "";
-  // Re-render UI
+
   render();
   setMessage("New run: gather equipment and select a site. Hint available.", "info");
 }
@@ -281,9 +275,8 @@ function resetState() {
    ------------------------- */
 
 function renderInventory() {
-  // Clear grid
   inventoryGrid.innerHTML = "";
-  // For each equipment item, create a card showing collected state
+
   for (const item of REQUIRED_EQUIPMENT) {
     const card = document.createElement("div");
     card.className = "item-card";
@@ -303,15 +296,11 @@ function renderInventory() {
     card.appendChild(label);
     card.appendChild(check);
 
-    // Click behavior:
-    // - If not collected: clicking collects the item into inventory (simulating "pick up")
-    // - If collected: clicking selects the item for use
     card.addEventListener("click", () => {
       if (!state.inventory.has(item)) {
         state.inventory.add(item);
         setMessage(`Collected ${item}.`, "success");
       } else {
-        // toggle selection
         if (state.selectedItem === item) {
           state.selectedItem = null;
           setMessage(`${item} deselected.`, "info");
@@ -325,20 +314,30 @@ function renderInventory() {
 
     inventoryGrid.appendChild(card);
   }
+
   selectedItemSpan.textContent = state.selectedItem ? state.selectedItem : "None";
 }
 
+function getSiteCenterX(site) {
+  return 150;
+}
+function getSiteCenterY(site) {
+  switch (site) {
+    case "hand": return 430;
+    case "forearm": return 300;
+    case "antecubital": return 170;
+    case "upperarm": return 70;
+    default: return 300;
+  }
+}
+
 function renderArmRegions() {
-  // Visual selection styles
   for (const key of Object.keys(armRegions)) {
     const el = armRegions[key];
     el.classList.remove("selected");
-    if (state.selectedSite === key) {
-      el.classList.add("selected");
-    }
+    if (state.selectedSite === key) el.classList.add("selected");
   }
 
-  // Site viability text
   if (!state.selectedSite) {
     selectedSiteSpan.textContent = "None";
     siteViabilityDiv.textContent = "";
@@ -349,10 +348,9 @@ function renderArmRegions() {
     siteViabilityDiv.style.color = viable ? "var(--success)" : "var(--danger)";
   }
 
-  // Swelling indicator animation if swelling is true
   if (state.swelling) {
     swellingLabel.setAttribute("visibility", "visible");
-    swellingIndicator.setAttribute("r", 40); // expand
+    swellingIndicator.setAttribute("r", 40);
     swellingIndicator.setAttribute("cx", getSiteCenterX(state.selectedSite));
     swellingIndicator.setAttribute("cy", getSiteCenterY(state.selectedSite));
   } else {
@@ -361,43 +359,10 @@ function renderArmRegions() {
   }
 }
 
-function getSiteCenterX(site) {
-  // approximate centers used by the SVG layout
-  switch (site) {
-    case "hand":
-      return 150;
-    case "forearm":
-      return 150;
-    case "antecubital":
-      return 150;
-    case "upperarm":
-      return 150;
-    default:
-      return 150;
-  }
-}
-function getSiteCenterY(site) {
-  switch (site) {
-    case "hand":
-      return 430;
-    case "forearm":
-      return 300;
-    case "antecubital":
-      return 170;
-    case "upperarm":
-      return 70;
-    default:
-      return 300;
-  }
-}
-
 function renderSteps() {
-  // Find first incomplete step to show as current
   const firstIncomplete = steps.find((st) => !st.isComplete(state));
-  const currentTitle = firstIncomplete ? firstIncomplete.title : "Completed!";
-  currentStepDiv.textContent = currentTitle;
+  currentStepDiv.textContent = firstIncomplete ? firstIncomplete.title : "Completed!";
 
-  // Render checklist
   stepsOl.innerHTML = "";
   for (const st of steps) {
     const li = document.createElement("li");
@@ -419,7 +384,6 @@ function renderSteps() {
 }
 
 function renderMessages() {
-  // Render the current message in the feedback area
   feedbackDiv.innerHTML = "";
   if (!state.message) {
     feedbackDiv.textContent = "Actions and guidance will appear here.";
@@ -437,36 +401,7 @@ function render() {
   renderArmRegions();
   renderSteps();
   renderMessages();
-  // Update selected item text
   selectedItemSpan.textContent = state.selectedItem ? state.selectedItem : "None";
-
-  // Update console debug for developers/learners
-  console.log("--- STATE ---", JSON.parse(JSON.stringify({
-    inventory: Array.from(state.inventory),
-    selectedItem: state.selectedItem,
-    selectedSite: state.selectedSite,
-    viableSites: state.viableSites,
-    tourniquetOn: state.tourniquetOn,
-    tourniquetOff: state.tourniquetOff,
-    siteCleaned: state.siteCleaned,
-    cannulaOpened: state.cannulaOpened,
-    cannulaIn: state.cannulaIn,
-    styletDisposed: state.styletDisposed,
-    bungOn: state.bungOn,
-    dressingOn: state.dressingOn,
-    syringeFilled: state.syringeFilled,
-    flushed: state.flushed,
-    swelling: state.swelling,
-  })));
-}
-
-/* -------------------------
-   Utility UI helpers
-   ------------------------- */
-
-function capitalize(s) {
-  if (!s) return s;
-  return s[0].toUpperCase() + s.slice(1);
 }
 
 /* -------------------------
@@ -476,16 +411,11 @@ function capitalize(s) {
 for (const [siteKey, el] of Object.entries(armRegions)) {
   el.style.cursor = "pointer";
   el.addEventListener("click", () => {
-    // When user clicks the arm region, behavior depends on selectedItem or action
-    // - If selectedItem is "elastic tourniquet" and not yet on: apply tourniquet
-    // - If selectedItem is "alcohol swab": clean site
-    // - Otherwise: just select the site
     state.selectedSite = siteKey;
-    state.siteCleaned = state.siteCleaned && state.selectedSite === siteKey; // siteCleaned remains only if same site
-    state.swelling = false; // clear swelling when choosing a new site
+    state.siteCleaned = state.siteCleaned && state.selectedSite === siteKey;
+    state.swelling = false;
     render();
 
-    // If user has selected an item and it's a 'use-on-arm' item, perform appropriate action
     if (state.selectedItem === "elastic tourniquet") {
       attemptApplyTourniquet(siteKey);
       return;
@@ -495,7 +425,6 @@ for (const [siteKey, el] of Object.entries(armRegions)) {
       return;
     }
 
-    // Normal selection vs viability
     if (!state.viableSites.includes(siteKey)) {
       setMessage("No suitable vein felt/seen here—move proximally.", "error");
     } else {
@@ -506,26 +435,26 @@ for (const [siteKey, el] of Object.entries(armRegions)) {
 }
 
 /* -------------------------
-   Action handlers (buttons & interactions)
+   Action handlers
    ------------------------- */
 
 actionApplyTourniquetBtn.addEventListener("click", () => {
   if (state.selectedItem === "elastic tourniquet") {
-    // If tourniquet is selected as item, applying is same as clicking arm
     attemptApplyTourniquet(state.selectedSite);
   } else {
-    // Allow applying tourniquet directly without selecting item only if item is collected
     if (!state.inventory.has("elastic tourniquet")) {
       setMessage("You need to collect the elastic tourniquet from the tray first.", "error");
       return;
     }
-    // Apply to currently selected site if any
     attemptApplyTourniquet(state.selectedSite);
   }
 });
 
+actionCleanSiteBtn.addEventListener("click", () => {
+  attemptCleanSite(state.selectedSite);
+});
+
 actionReleaseTourniquetBtn.addEventListener("click", () => {
-  // Releasing must happen after successful cannula insertion
   if (!state.cannulaIn) {
     setMessage("Release the tourniquet only after successful insertion. Cannula is not in.", "error");
     return;
@@ -551,8 +480,6 @@ actionOpenCannulaBtn.addEventListener("click", () => {
 });
 
 actionInsertCannulaBtn.addEventListener("click", () => {
-  // Insertion is interactive: open a small angle chooser dialog (simple implementation via prompt)
-  // Check preconditions first
   if (!state.cannulaOpened) {
     setMessage("Open the cannula before attempting insertion.", "error");
     return;
@@ -574,8 +501,6 @@ actionInsertCannulaBtn.addEventListener("click", () => {
     return;
   }
 
-  // Show angle choices using window.prompt-like UI (simpler, accessible)
-  // We'll use a small custom prompt using confirm/alert loops (since no modal framework).
   const angle = prompt("Choose insertion angle: enter 10, 20, or 45 (degrees). Recommended: 10 or 20.");
   if (angle === null) {
     setMessage("Cannula insertion cancelled.", "info");
@@ -587,11 +512,8 @@ actionInsertCannulaBtn.addEventListener("click", () => {
     return;
   }
 
-  // Evaluate insertion success
   if (angleNum === 45) {
-    // Fail insertion due to wrong angle
     state.cannulaIn = false;
-    // Simulate infiltration state and swelling
     state.swelling = true;
     setMessage(
       "Cannula did not enter the vein. Reattempt: choose a viable site and insert at a shallow angle (10–20°). Swelling noted.",
@@ -601,15 +523,12 @@ actionInsertCannulaBtn.addEventListener("click", () => {
     return;
   }
 
-  // Angle acceptable. Successful insertion.
   state.cannulaIn = true;
-  state.cannulaOpened = true; // remains opened
   setMessage("Cannula successfully inserted into the vein.", "success");
   render();
 });
 
 actionDisposeSharpsBtn.addEventListener("click", () => {
-  // Requires sharps bin collected and cannula inserted
   if (!state.inventory.has("sharps bin")) {
     setMessage("You need to collect the sharps bin from the tray to dispose the stylet.", "error");
     return;
@@ -624,7 +543,6 @@ actionDisposeSharpsBtn.addEventListener("click", () => {
 });
 
 actionAttachBungBtn.addEventListener("click", () => {
-  // Requires cannulaIn, stylet disposed, and tourniquetOff (released)
   if (!state.cannulaIn) {
     setMessage("Cannula must be in before attaching the bung.", "error");
     return;
@@ -657,7 +575,6 @@ actionApplyDressingBtn.addEventListener("click", () => {
 });
 
 actionFillSyringeBtn.addEventListener("click", () => {
-  // Must have collected syringe and fluids; require clicking both in any order then click Fill Syringe
   if (!state.inventory.has("10 mL syringe")) {
     setMessage("Collect the 10 mL syringe from the tray first.", "error");
     return;
@@ -672,7 +589,6 @@ actionFillSyringeBtn.addEventListener("click", () => {
 });
 
 actionFlushBtn.addEventListener("click", () => {
-  // Flush requires: syringe filled, bung attached, cannula inserted
   if (!state.syringeFilled) {
     setMessage("Fill the syringe with saline before flushing.", "error");
     return;
@@ -682,27 +598,21 @@ actionFlushBtn.addEventListener("click", () => {
     return;
   }
 
-  // If cannulaIn is false, simulate infiltration/swelling and block success
   if (!state.cannulaIn) {
-    // Show swelling and infiltration message
     state.swelling = true;
     state.flushed = false;
-    setMessage(
-      "Swelling noted—likely infiltration/extravasation. Cannula is not correctly placed.",
-      "error"
-    );
+    setMessage("Swelling noted—likely infiltration/extravasation. Cannula is not correctly placed.", "error");
     render();
     return;
   }
 
-  // Otherwise success: flush completes
   state.flushed = true;
   setMessage("Cannula flushed successfully. Procedure complete.", "success");
   render();
 });
 
 /* -------------------------
-   Attempted use functions (when selectedItem used on arm)
+   Attempted use functions
    ------------------------- */
 
 function attemptApplyTourniquet(siteKey) {
@@ -714,7 +624,6 @@ function attemptApplyTourniquet(siteKey) {
     setMessage("Select a site on the arm to apply the tourniquet (click an arm region).", "error");
     return;
   }
-  // Applying the tourniquet is allowed regardless of viability
   state.tourniquetOn = true;
   state.tourniquetOff = false;
   setMessage(`Tourniquet applied at ${capitalize(siteKey)}.`, "success");
@@ -730,7 +639,6 @@ function attemptCleanSite(siteKey) {
     setMessage("Select a site to clean (click an arm region).", "error");
     return;
   }
-  // Cleaning the selected site
   state.siteCleaned = true;
   setMessage(`Site cleaned at ${capitalize(siteKey)}.`, "success");
   render();
@@ -741,7 +649,6 @@ function attemptCleanSite(siteKey) {
    ------------------------- */
 
 hintBtn.addEventListener("click", () => {
-  // Find the first incomplete step and show its hint
   const firstIncomplete = steps.find((st) => !st.isComplete(state));
   if (!firstIncomplete) {
     setMessage("All steps complete. Reset to practice again.", "info");
@@ -757,29 +664,14 @@ resetBtn.addEventListener("click", () => {
 });
 
 /* -------------------------
-   Setup event listeners for selecting items by clicking outside the inventory:
-   If the user clicks an inventory item (already implemented), it's fine.
-   We also allow using selected item on UI actions: e.g., clicking an item then clicking an action button.
+   Accessibility
    ------------------------- */
 
-// Clicking on "Apply Tourniquet" button already handles selectedItem case.
-// For "Open Cannula", clicking the 'cannula' item then "Open Cannula" is allowed.
-// For cleaning, selecting alcohol swab and clicking arm is implemented.
-
-// Attach small UI to enforce selecting bung, tegaderm, etc via clicking inventory then action works (if not, user can directly click action buttons).
-
-/* -------------------------
-   Arm region hover/click accessibility
-   ------------------------- */
-
-// Make regions keyboard accessible (optional) - add role and tabindex
 for (const el of Object.values(armRegions)) {
   el.setAttribute("role", "button");
   el.setAttribute("tabindex", "0");
   el.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter" || ev.key === " ") {
-      el.click();
-    }
+    if (ev.key === "Enter" || ev.key === " ") el.click();
   });
 }
 
@@ -787,13 +679,14 @@ for (const el of Object.values(armRegions)) {
    Startup
    ------------------------- */
 
-resetState(); // initialize state and render
-
-// Expose state for debugging in console
+resetState();
 window._ivSimState = state;
 window._ivSimReset = resetState;
 
-// --- Start overlay (click hotspots to collect equipment) ---
+/* -------------------------
+   Equipment overlay (hotspots)
+   ------------------------- */
+
 const OVERLAY_REQUIRED_ITEMS = [
   "alcohol swab",
   "bung",
@@ -823,7 +716,6 @@ function formatItemLabel(item) {
 
 function updateOverlayStatus() {
   const collectedCount = OVERLAY_REQUIRED_ITEMS.filter(i => state.inventory.has(i)).length;
-
   overlayStatus.textContent = `Collected: ${collectedCount} / ${OVERLAY_REQUIRED_ITEMS.length}`;
   startBtn.disabled = collectedCount !== OVERLAY_REQUIRED_ITEMS.length;
 
@@ -845,7 +737,6 @@ hotspots.forEach(btn => {
     const item = btn.dataset.item;
     if (!item) return;
 
-    // Only count items in the overlay list
     if (OVERLAY_REQUIRED_ITEMS.includes(item)) {
       state.inventory.add(item);
     }
@@ -861,8 +752,127 @@ hotspots.forEach(btn => {
 startBtn.addEventListener("click", () => {
   startOverlay.style.display = "none";
   document.body.classList.remove("overlay-open");
+
+  // Show drag stage first, hide full sim for now
+  if (dragStage) dragStage.classList.remove("hidden");
+  if (simStage) simStage.classList.add("hidden");
 });
 
 updateOverlayStatus();
 
+/* -------------------------
+   Drag & Drop stage logic
+   ------------------------- */
 
+const narrationText = {
+  "elastic tourniquet": "Tourniquet applied. Blood flow is restricted to help the vein fill.",
+  "alcohol swab": "Alcohol swab used. Site cleaned.",
+  "cannula": "Cannula positioned for insertion at a shallow angle (10–20°).",
+  "bung": "Bung attached to the cannula hub.",
+  "tegaderm": "Tegaderm applied to secure the cannula.",
+  "10 mL syringe": "10 mL syringe ready.",
+  "10 mL fluids (saline)": "Saline ready to draw up for flushing."
+};
+
+function setNarration(msg) {
+  if (narrationBox) narrationBox.textContent = msg;
+}
+
+function isOverDropZone(x, y) {
+  if (!armDropZone) return false;
+  const r = armDropZone.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+function makeDraggable(el) {
+  const originalParent = el.parentElement;
+  const originalNext = el.nextElementSibling;
+
+  let dragging = false;
+  let pointerId = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  el.addEventListener("pointerdown", (e) => {
+    pointerId = e.pointerId;
+    el.setPointerCapture(pointerId);
+
+    const rect = el.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    el.classList.add("dragging");
+    dragging = true;
+
+    // Lift element above everything
+    el.style.position = "fixed";
+    el.style.left = `${rect.left}px`;
+    el.style.top = `${rect.top}px`;
+    el.style.zIndex = "99999";
+    el.style.margin = "0";
+  });
+
+  el.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    el.style.left = `${e.clientX - offsetX}px`;
+    el.style.top = `${e.clientY - offsetY}px`;
+  });
+
+  el.addEventListener("pointerup", (e) => {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove("dragging");
+
+    const droppedOnArm = isOverDropZone(e.clientX, e.clientY);
+    const item = el.dataset.item;
+
+    if (droppedOnArm && armDropZone) {
+      // Place inside drop zone
+      const zoneRect = armDropZone.getBoundingClientRect();
+      const x = e.clientX - zoneRect.left - offsetX;
+      const y = e.clientY - zoneRect.top - offsetY;
+
+      armDropZone.appendChild(el);
+      el.style.position = "absolute";
+      el.style.left = `${Math.max(0, x)}px`;
+      el.style.top = `${Math.max(0, y)}px`;
+      el.style.zIndex = "30";
+      el.classList.add("placed");
+
+      setNarration(narrationText[item] || `${item} applied.`);
+    } else {
+      // Return to left panel list
+      if (originalParent) {
+        if (originalNext && originalNext.parentElement === originalParent) {
+          originalParent.insertBefore(el, originalNext);
+        } else {
+          originalParent.appendChild(el);
+        }
+      }
+      el.style.position = "static";
+      el.style.left = "";
+      el.style.top = "";
+      el.style.zIndex = "";
+      el.style.margin = "";
+      el.classList.remove("placed");
+      setNarration("Move the item onto the arm to apply it.");
+    }
+  });
+
+  el.addEventListener("pointercancel", () => {
+    dragging = false;
+    el.classList.remove("dragging");
+  });
+}
+
+// Enable dragging
+document.querySelectorAll(".draggable").forEach(makeDraggable);
+
+// Continue to full simulation
+if (continueToSimBtn) {
+  continueToSimBtn.addEventListener("click", () => {
+    if (dragStage) dragStage.classList.add("hidden");
+    if (simStage) simStage.classList.remove("hidden");
+    setMessage("Continue the procedure in the full simulation.", "info");
+  });
+}

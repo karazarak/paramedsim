@@ -9,48 +9,48 @@
 
 <body>
   <!-- START SCREEN OVERLAY -->
-  <div id="start-overlay" class="overlay">
-    <div class="overlay-card">
-      <h2>Select your equipment</h2>
-      <p>Tap each item in the kit photo to collect it. You must collect everything to begin.</p>
+<div id="start-overlay" class="overlay">
+  <div class="overlay-card">
+    <h2>Select your equipment</h2>
+    <p>Tap each item in the kit photo to collect it. You must collect everything to begin.</p>
 
-      <div class="kit-wrap">
-        <img id="kit-image" src="kit.jpg" alt="IV kit photo">
+    <div class="kit-wrap">
+      <img id="kit-image" src="kit.jpg" alt="IV kit photo">
 
-        <!-- HOTSPOTS based on your labelled photo -->
-        <button class="hotspot" data-item="elastic tourniquet"
-          style="left:4.7%; top:26.3%; width:6.7%; height:40.3%;" aria-label="Tourniquet"></button>
+      <!-- HOTSPOTS based on your labelled photo -->
+      <button class="hotspot" data-item="elastic tourniquet"
+        style="left:4.7%; top:26.3%; width:6.7%; height:40.3%;" aria-label="Tourniquet"></button>
 
-        <button class="hotspot" data-item="alcohol swab"
-          style="left:11.8%; top:24.4%; width:9.4%; height:33.0%;" aria-label="Alcohol swabs"></button>
+      <button class="hotspot" data-item="alcohol swab"
+        style="left:11.8%; top:24.4%; width:9.4%; height:33.0%;" aria-label="Alcohol swabs"></button>
 
-        <button class="hotspot" data-item="cannula"
-          style="left:23.5%; top:14.7%; width:33.9%; height:36.7%;" aria-label="Cannulas"></button>
+      <button class="hotspot" data-item="cannula"
+        style="left:23.5%; top:14.7%; width:33.9%; height:36.7%;" aria-label="Cannulas"></button>
 
-        <button class="hotspot" data-item="bung"
-          style="left:59.1%; top:28.7%; width:10.4%; height:12.2%;" aria-label="Bung"></button>
+      <button class="hotspot" data-item="bung"
+        style="left:59.1%; top:28.7%; width:10.4%; height:12.2%;" aria-label="Bung"></button>
 
-        <button class="hotspot" data-item="10 mL fluids (saline)"
-          style="left:58.5%; top:41.6%; width:12.1%; height:12.8%;" aria-label="Fluid"></button>
+      <button class="hotspot" data-item="10 mL fluids (saline)"
+        style="left:58.5%; top:41.6%; width:12.1%; height:12.8%;" aria-label="Fluid"></button>
 
-        <button class="hotspot" data-item="tegaderm"
-          style="left:71.9%; top:14.7%; width:26.2%; height:29.3%;" aria-label="Tegaderm"></button>
+      <button class="hotspot" data-item="tegaderm"
+        style="left:71.9%; top:14.7%; width:26.2%; height:29.3%;" aria-label="Tegaderm"></button>
 
-        <button class="hotspot" data-item="10 mL syringe"
-          style="left:8.7%; top:52.6%; width:58.5%; height:26.9%;" aria-label="Syringes"></button>
+      <button class="hotspot" data-item="10 mL syringe"
+        style="left:8.7%; top:52.6%; width:58.5%; height:26.9%;" aria-label="Syringes"></button>
+    </div>
+
+    <div class="overlay-footer">
+      <div class="overlay-left">
+        <div id="overlay-status" class="overlay-status">Collected: 0 / 7</div>
+        <div id="overlay-checklist" class="overlay-checklist"></div>
       </div>
 
-     <div class="overlay-footer">
-  <div class="overlay-left">
-    <div id="overlay-status" class="overlay-status">Collected: 0 / 7</div>
-
-    <!-- NEW: checklist -->
-    <div id="overlay-checklist" class="overlay-checklist"></div>
+      <button id="start-btn" class="start-btn" disabled>Start simulation</button>
+    </div>
   </div>
-
-  <button id="start-btn" class="start-btn" disabled>Start simulation</button>
 </div>
-  <!-- END START SCREEN OVERLAY -->
+<!-- END START SCREEN OVERLAY -->
 
   <header>
     <h1>IV Cannulation Simulation — MVP</h1>

@@ -188,3 +188,58 @@ function makeDraggable(el) {
 
 // enable dragging
 document.querySelectorAll(".draggable").forEach(makeDraggable);
+// ------------------------------
+// Simple chat UI (calls your backend)
+// ------------------------------
+const chatLog = document.getElementById("chat-log");
+const chatInput = document.getElementById("chat-input");
+const chatSend = document.getElementById("chat-send");
+
+function addMsg(text, who){
+  const div = document.createElement("div");
+  div.className = `msg ${who}`;
+  div.textContent = text;
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+async function sendChat(){
+  const text = (chatInput.value || "").trim();
+  if (!text) return;
+
+  addMsg(text, "user");
+  chatInput.value = "";
+
+  addMsg("…thinking", "ai");
+
+  // NOTE: this URL must point to YOUR serverless endpoint
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text })
+  });
+
+  // Remove the “…thinking” bubble
+  chatLog.lastChild.remove();
+
+  if (!res.ok) {
+    addMsg("Error talking to the AI. Check your server setup.", "ai");
+    return;
+  }
+
+  const data = await res.json();
+  addMsg(data.reply || "No reply.", "ai");
+}
+
+if (chatSend) chatSend.addEventListener("click", sendChat);
+if (chatInput) chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendChat();
+});
+
+
+
+
+
+
+
+

@@ -219,6 +219,13 @@ body.overlay-open{ overflow:hidden; }
   background: #fff;
   border: 1px solid #e6eefc;
 }
+.ai-help{
+  margin: 16px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e6eefc;
+  border-radius: 12px;
+}
 
 .chat-log{
   min-height: 120px;
@@ -259,10 +266,9 @@ body.overlay-open{ overflow:hidden; }
   background: #fff;
   border: 1px solid #eef2ff;
 }
+
 .msg.user{ border-color: #dbeafe; }
 .msg.ai{ border-color: #d1f6e4; }
-
-
 
 
 

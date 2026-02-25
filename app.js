@@ -235,7 +235,57 @@ if (chatSend) chatSend.addEventListener("click", sendChat);
 if (chatInput) chatInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendChat();
 });
+// ------------------------------
+// Gemini chat UI (calls /api/chat)
+// ------------------------------
+const chatLog = document.getElementById("chat-log");
+const chatInput = document.getElementById("chat-input");
+const chatSend = document.getElementById("chat-send");
 
+function addMsg(text, who){
+  const div = document.createElement("div");
+  div.className = `msg ${who}`;
+  div.textContent = text;
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+async function sendChat(){
+  const text = (chatInput.value || "").trim();
+  if (!text) return;
+
+  addMsg(text, "user");
+  chatInput.value = "";
+
+  addMsg("Thinking…", "ai");
+  const thinkingNode = chatLog.lastChild;
+
+  try{
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+
+    const data = await res.json();
+    thinkingNode.remove();
+
+    if (!res.ok) {
+      addMsg(data?.error || "Error calling AI.", "ai");
+      return;
+    }
+
+    addMsg(data.reply || "No reply.", "ai");
+  }catch(e){
+    thinkingNode.remove();
+    addMsg("Network error calling AI.", "ai");
+  }
+}
+
+if (chatSend) chatSend.addEventListener("click", sendChat);
+if (chatInput) chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendChat();
+});
 
 
 

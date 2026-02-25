@@ -212,3 +212,66 @@ body.overlay-open{ overflow:hidden; }
   inset:0;
   z-index: 20;
 }
+.help-chat{
+  margin: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e6eefc;
+}
+
+.chat-log{
+  min-height: 120px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid #eef2ff;
+  border-radius: 10px;
+  background: #fafcff;
+  margin-bottom: 10px;
+}
+
+.chat-row{
+  display: flex;
+  gap: 8px;
+}
+
+#chat-input{
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+}
+
+#chat-send{
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.msg{
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #eef2ff;
+}
+.msg.user{ border-color: #dbeafe; }
+.msg.ai{ border-color: #d1f6e4; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

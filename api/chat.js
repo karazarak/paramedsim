@@ -1,37 +1,42 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "POST only" });
+  }
 
   try {
     const { message } = req.body || {};
     if (!message) return res.status(400).json({ error: "Missing message" });
 
-    const openaiRes = await fetch("https://api.openai.com/v1/responses", {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "Missing GEMINI_API_KEY env var" });
+
+    // Gemini REST endpoint (generateContent)
+    const model = "gemini-2.0-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const prompt = `
+You are a helpful paramedicine tutor for IV cannulation practice.
+Be concise, step-by-step, and practical.
+If the user asks something unsafe, explain why and give safer guidance.
+User question: ${message}
+`.trim();
+
+    const resp = await fetch(url, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: [
-          {
-            role: "system",
-            content: "You are a helpful paramedicine tutor. Be concise, step-by-step, and safety-focused."
-          },
-          {
-            role: "user",
-            content: message
-          }
+        contents: [
+          { parts: [{ text: prompt }] }
         ]
       }),
     });
 
-    const json = await openaiRes.json();
+    const data = await resp.json();
 
-    // Pull the text out of the Responses API payload
+    // Typical text location: candidates[0].content.parts[0].text
     const reply =
-      json.output_text ||
-      (json.output?.[0]?.content?.[0]?.text ?? "No output_text received.");
+      data?.candidates?.[0]?.content?.parts?.map(p => p.text).filter(Boolean).join("\n")
+      || "No reply returned.";
 
     return res.status(200).json({ reply });
   } catch (err) {

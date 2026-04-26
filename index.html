@@ -92,15 +92,17 @@
     </section>
   </main>
 
-  <script src="app.js" defer></script>
- <section class="ai-help">
-  <h2>Ask the AI (Gemini)</h2>
-  <div id="chat-log" class="chat-log"></div>
+  <!-- AI helper (shown after the equipment stage) -->
+  <section id="ai-help" class="ai-help hidden">
+    <h2>Ask the AI (Gemini)</h2>
+    <div id="chat-log" class="chat-log"></div>
 
-  <div class="chat-row">
-    <input id="chat-input" type="text" placeholder="Ask a question about cannulation..." />
-    <button id="chat-send">Send</button>
-  </div>
-</section>
+    <div class="chat-row">
+      <input id="chat-input" type="text" placeholder="Ask a question about cannulation..." />
+      <button id="chat-send">Send</button>
+    </div>
+  </section>
+
+  <script src="app.js" defer></script>
 </body>
 </html>

@@ -1,7 +1,21 @@
 // Only two stages now:
 // 1) equipment photo overlay
 // 2) drag equipment onto arm + narration
-
+window.addEventListener("error", (e) => {
+  const box = document.createElement("div");
+  box.style.position = "fixed";
+  box.style.left = "10px";
+  box.style.right = "10px";
+  box.style.top = "10px";
+  box.style.zIndex = "999999";
+  box.style.background = "#fff";
+  box.style.border = "2px solid #e04b4b";
+  box.style.borderRadius = "10px";
+  box.style.padding = "10px";
+  box.style.fontWeight = "700";
+  box.textContent = "JavaScript error: " + (e.message || "unknown");
+  document.body.appendChild(box);
+});
 const OVERLAY_REQUIRED_ITEMS = [
   "alcohol swab",
   "bung",

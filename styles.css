@@ -54,8 +54,8 @@ body{
 
 .hotspot{
   position:absolute;
-  border: 2px solid rgba(0,150,255,0.0);
-  background: rgba(0,150,255,0.0);
+  border: 2px solid rgba(0,150,255,0.9);
+  background: rgba(0,150,255,0.20);
   border-radius: 8px;
   cursor:pointer;
   z-index: 5;
